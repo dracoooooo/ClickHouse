@@ -1,57 +1,40 @@
 {
-    "name": "ClickHouse 开发环境",
+    "name": "ClickHouse Development",
+    "dockerFile": "Dockerfile",
     "build": {
-        "dockerfile": "Dockerfile",
-        "context": "."
+        "args": {
+            "IMAGE": "clickhouse/binary-builder:latest"
+        }
+    },
+    "containerEnv": {
+        "GOPATH": "/workdir/go",
+        "GOCACHE": "/workdir/.cache/go-build",
+        "CCACHE_DIR": "/workdir/.cache/ccache"
+    },
+    "mounts": [
+        "source=clickhouse-build,target=/workdir",
+        "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+    ],
+    "features": {
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {
+            "version": "latest",
+            "moby": true
+        }
     },
     "customizations": {
         "vscode": {
             "extensions": [
                 "ms-vscode.cpptools",
+                "twxs.cmake",
                 "ms-vscode.cmake-tools",
-                "llvm-vs-code-extensions.vscode-clangd",
-                "xaver.clang-format",
-                "github.vscode-pull-request-github",
-                "eamodio.gitlens",
-                "davidanson.vscode-markdownlint",
-                "ms-ceintl.vscode-language-pack-zh-hans"
-            ],
-            "settings": {
-                "editor.formatOnSave": true,
-                "C_Cpp.intelliSenseEngine": "disabled",
-                "C_Cpp.autocomplete": "disabled",
-                "C_Cpp.errorSquiggles": "disabled",
-                "clangd.path": "/usr/bin/clangd",
-                "clangd.arguments": [
-                    "--background-index",
-                    "--clang-tidy",
-                    "--compile-commands-dir=build",
-                    "--completion-style=detailed",
-                    "--header-insertion=iwyu",
-                    "-j=12"
-                ],
-                "cmake.configureOnOpen": true,
-                "cmake.buildDirectory": "${workspaceFolder}/build"
-            }
+                "rust-lang.rust-analyzer"
+            ]
         }
     },
-    "mounts": [
-        "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached",
-        "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,consistency=cached"
-    ],
-    "remoteUser": "vscode",
+    "postCreateCommand": "mkdir -p build && cmake -S . -B build",
+    "remoteUser": "root",
     "runArgs": [
-        "--cap-add=SYS_PTRACE",
-        "--security-opt", "seccomp=unconfined",
-        "--ulimit", "nofile=262144:262144"
-    ],
-    "containerEnv": {
-        "CC": "clang",
-        "CXX": "clang++",
-        "CCACHE_DIR": "/workspaces/ClickHouse/.ccache"
-    },
-    "postCreateCommand": "git submodule update --init --recursive --jobs $(nproc)",
-    "remoteEnv": {
-        "DEBIAN_FRONTEND": "noninteractive"
-    }
+        "--ulimit", "nofile=262144:262144",
+        "--security-opt", "seccomp=unconfined"
+    ]
 }
