@@ -1,15 +1,55 @@
 {
-  "name": "Ubuntu 开发环境",
-  "build": {
-    "dockerfile": "Dockerfile"
-  },
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "ms-vscode.cpptools",
-        "ms-vscode.cmake-tools"
-      ]
+    "name": "ClickHouse Development",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "."
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-vscode.cmake-tools",
+                "llvm-vs-code-extensions.vscode-clangd",
+                "xaver.clang-format",
+                "github.vscode-pull-request-github",
+                "eamodio.gitlens",
+                "davidanson.vscode-markdownlint"
+            ],
+            "settings": {
+                "editor.formatOnSave": true,
+                "C_Cpp.intelliSenseEngine": "disabled",
+                "C_Cpp.autocomplete": "disabled",
+                "C_Cpp.errorSquiggles": "disabled",
+                "clangd.path": "/usr/bin/clangd",
+                "clangd.arguments": [
+                    "--background-index",
+                    "--clang-tidy",
+                    "--compile-commands-dir=build",
+                    "--completion-style=detailed",
+                    "--header-insertion=iwyu",
+                    "-j=12"
+                ],
+                "cmake.configureOnOpen": true,
+                "cmake.buildDirectory": "${workspaceFolder}/build"
+            }
+        }
+    },
+    "mounts": [
+        "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached",
+        "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,consistency=cached"
+    ],
+    "remoteUser": "vscode",
+    "runArgs": [
+        "--cap-add=SYS_PTRACE",
+        "--security-opt", "seccomp=unconfined",
+        "--ulimit", "nofile=262144:262144"
+    ],
+    "containerEnv": {
+        "CC": "clang",
+        "CXX": "clang++"
+    },
+    "postCreateCommand": "git submodule update --init --recursive --jobs $(nproc)",
+    "remoteEnv": {
+        "DEBIAN_FRONTEND": "noninteractive"
     }
-  },
-  "remoteUser": "vscode"
 }
