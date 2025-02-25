@@ -1,33 +1,59 @@
-FROM ubuntu:noble
+FROM ubuntu:22.04
 
-# 避免安装过程中的交互提示
-ENV DEBIAN_FRONTEND=noninteractive
+ARG DEBIAN_FRONTEND=noninteractive
+ARG USERNAME=vscode
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
 
-# 安装依赖
+# 安装基本工具和依赖
 RUN apt-get update && apt-get install -y \
-    git \
-    cmake \
-    ccache \
-    python3 \
-    ninja-build \
-    nasm \
-    yasm \
-    gawk \
-    lsb-release \
+    build-essential \
+    curl \
     wget \
+    git \
+    gnupg2 \
+    lsb-release \
     software-properties-common \
-    gnupg \
+    cmake \
+    ninja-build \
+    pkg-config \
+    libssl-dev \
+    zlib1g-dev \
+    liblz4-dev \
+    libreadline-dev \
+    libicu-dev \
+    python3 \
+    python3-pip \
+    gdb \
+    lldb \
+    openssh-client \
     sudo \
+    unzip \
+    vim \
+    tzdata \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# 安装 LLVM
-RUN bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+# 安装 LLVM 和 Clang
+RUN curl -fsSL https://apt.llvm.org/llvm.sh -o /tmp/llvm.sh \
+    && chmod +x /tmp/llvm.sh \
+    && /tmp/llvm.sh 15 all \
+    && rm /tmp/llvm.sh
 
-# 创建非 root 用户
-RUN groupadd --gid 1000 vscode \
-    && useradd --uid 1000 --gid 1000 -s /bin/bash -m vscode \
-    && echo vscode ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/vscode \
-    && chmod 0440 /etc/sudoers.d/vscode
+# 创建非root用户
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME
 
-# 设置默认用户
-USER vscode
+# 配置 clangd
+RUN ln -s /usr/bin/clangd-15 /usr/bin/clangd
+
+# 配置 clang 和 clang++ 作为默认编译器
+RUN update-alternatives --install /usr/bin/cc cc /usr/bin/clang-15 100 \
+    && update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-15 100
+
+# 设置工作目录
+WORKDIR /workspaces/ClickHouse
+
+USER $USERNAME
