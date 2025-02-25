@@ -1,5 +1,5 @@
 {
-    "name": "ClickHouse Development",
+    "name": "ClickHouse 开发环境",
     "build": {
         "dockerfile": "Dockerfile",
         "context": "."
@@ -13,7 +13,8 @@
                 "xaver.clang-format",
                 "github.vscode-pull-request-github",
                 "eamodio.gitlens",
-                "davidanson.vscode-markdownlint"
+                "davidanson.vscode-markdownlint",
+                "ms-ceintl.vscode-language-pack-zh-hans"
             ],
             "settings": {
                 "editor.formatOnSave": true,
@@ -46,7 +47,8 @@
     ],
     "containerEnv": {
         "CC": "clang",
-        "CXX": "clang++"
+        "CXX": "clang++",
+        "CCACHE_DIR": "/workspaces/ClickHouse/.ccache"
     },
     "postCreateCommand": "git submodule update --init --recursive --jobs $(nproc)",
     "remoteEnv": {
